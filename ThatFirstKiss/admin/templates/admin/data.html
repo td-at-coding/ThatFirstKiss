@@ -1,0 +1,14 @@
+{%extends 'admin/base.html'%}
+{%block title%}
+    Statistics Page
+{%endblock%}
+{%block content%}
+    <h1>Welcome To The Statistics Page!</h1>
+    {%with messages = get_flashed_messages()%}
+        {%if messages%}
+            {%for msg in messages%}
+                <p>{{msg}}</p>
+            {%endfor%}
+        {%endif%}
+    {%endwith%}
+{%endblock%}
