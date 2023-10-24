@@ -1,0 +1,29 @@
+{%extends "user/base.html"%}
+{%block title%}{{name}}{%endblock%}
+{%block content%}
+    {%with messages = get_flashed_messages()%}
+        {%if messages%}
+            {%for msg in messages%}
+                <p>{{msg}}</p>
+            {%endfor%}
+        {%endif%}
+    {%endwith%}
+    <p><h3>{{name}}</h3></p>
+    {%if pics%}
+        <div class="container">
+            <div class="row">
+                {%for pic in pics%}
+                    <div class="col-md-4 mb-4">
+                        <img src="{{pic.img}}" alt="{{pic.filename}}" class="img-fluid" width="128" height="128">
+                    </div>
+                {%endfor%}
+            </div>
+        </div>
+    {%endif%}
+    <form action="#" method="post">
+        <p>
+            <button type="submit" value="submit_like.{{id}}" name="submit">LIKE</button>
+            <button type="submit" value="submit_dislike.{{id}}" name="submit">DISLIKE</button>
+        </p>
+    </form>
+{%endblock%}

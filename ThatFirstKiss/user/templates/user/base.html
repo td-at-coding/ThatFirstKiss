@@ -16,7 +16,16 @@
               </li>
               {%if active%}
                 <li class="nav-item">
-                  <a class="nav-link" href="{{url_for('user.user_page')}}">USER PAGE</a>
+                  <a class="nav-link" href="{{url_for('user.profile')}}">PROFILE</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{{url_for('user.search')}}">SEARCH</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{{url_for('user.chats')}}">CHATS</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{{url_for('user.settings')}}">SETTINGS</a>
                 </li>
                 <li class="nav-item">
                   <a class="nav-link" href="{{url_for('user.logout')}}">LOGOUT</a>

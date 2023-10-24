@@ -1,0 +1,49 @@
+{%extends "user/base.html"%}
+{%block title%}Settings{%endblock%}
+{%block content%}
+    {%with messages = get_flashed_messages()%}
+        {%if messages%}
+            {%for msg in messages%}
+                <p>{{msg}}</p>
+            {%endfor%}
+        {%endif%}
+    {%endwith%}
+    {%if reqs%}
+        <p><h3>Requests:</h3></p>
+        <form action="#" method="post">
+            <div class="container">
+                <div class="row">
+                    {%for req in reqs%}
+                        <div class="col-md-4 mb-4">
+                            <p>Name: {{req.receiver.name}}</p>
+                            <p>
+                                <button type="submit" value="delete_request.{{req.id}}" name="submit">DELETE</button>
+                            </p>
+                        </div>
+                    {%endfor%}
+                </div>
+            </div>
+        </form>
+    {%endif%}
+    {%if ms%}
+        <p><h3>Matches:</h3></p>
+        <form action="#" method="post">
+            <div class="container">
+                <div class="row">
+                    {%for m in ms%}
+                        <div class="col-md-4 mb-4">
+                            {%if m.user_one.name == name%}
+                                <p>Name: {{m.user_two.name}}</p>
+                            {%else%}
+                                <p>Name: {{m.user_one.name}}</p>
+                            {%endif%}
+                            <p>
+                                <button type="submit" value="delete_match.{{m.id}}" name="submit">DELETE</button>
+                            </p>
+                        </div>
+                    {%endfor%}
+                </div>
+            </div>
+        </form>
+    {%endif%}
+{%endblock%}

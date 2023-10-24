@@ -1,0 +1,21 @@
+{%extends "user/base.html"%}
+{%block title%}{{username}}{%endblock%}
+{%block content%}
+    <h1>{{username}}</h1>
+    {%with messages = get_flashed_messages()%}
+        {%if messages%}
+            {%for msg in messages%}
+                <p>{{msg}}</p>
+            {%endfor%}
+        {%endif%}
+    {%endwith%}
+    {%if l and l|length%}
+        {%for e in l%}
+            <p>{{e.user.name}}: {{e.text}}</p>
+        {%endfor%}
+    {%endif%}
+    <form action="#" method="post">
+        <input type="text" name="text" placeholder="text to send">
+        <button type="submit" value="send_button" name="submit">send</button>
+    </form>
+{%endblock%}
