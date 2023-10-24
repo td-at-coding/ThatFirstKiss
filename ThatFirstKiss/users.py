@@ -70,3 +70,18 @@ class requests(db.Model):
     def __init__(self,initiator,receiver):
         self.initiator = initiator
         self.receiver = receiver
+
+class dislikes(db.Model):
+    id = db.Column('id', db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    disliked_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+    user = db.relationship('users', foreign_keys=[user_id])
+    disliked = db.relationship('users', foreign_keys=[disliked_id])
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'disliked_id', name='unique_dislikes'),
+    )
+    def __init__(self,user,disliked):
+        self.user = user
+        self.disliked = disliked

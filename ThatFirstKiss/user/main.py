@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, redirect, request, session, flash, url_for
-from users import users, db, images, matches, requests, messages
+from users import users, db, images, matches, requests, messages, dislikes
 from werkzeug.utils import secure_filename
 from sqlalchemy import or_, and_
 import base64
@@ -123,18 +123,27 @@ def search():
                     re = requests(current_user, second_user)
                     db.session.add(re)
                     db.session.commit()
+            elif submit_value[0] == 'submit_dislike':
+                user_id = int(submit_value[1])
+                second_user = users.query.filter_by(id=user_id).first()
+                dislike = dislikes(current_user, second_user)
+                db.session.add(dislike)
+                db.session.commit()
             else:
-                return 'Not implemented yet!'
+                return 'Error invalid post request'
         sex = session['sex']
         y1 = matches.query.filter_by(user_one_id=current_user.id)
         y2 = matches.query.filter_by(user_two_id=current_user.id)
         x = requests.query.filter_by(initiator_id=current_user.id)
-        # z = dislikes.query
+        z1 = dislikes.query.filter_by(user_id=current_user.id)
+        z2 = dislikes.query.filter_by(disliked_id=current_user.id)
         if sex == 'male':
             women = users.query.filter_by(sex='F').filter( \
                 ~users.id.in_(y1.with_entities(matches.user_two_id)) \
                 , ~users.id.in_(y2.with_entities(matches.user_one_id)) \
-                , ~users.id.in_(x.with_entities(requests.receiver_id))
+                , ~users.id.in_(x.with_entities(requests.receiver_id)) \
+                , ~users.id.in_(z1.with_entities(dislikes.disliked_id)) \
+                , ~users.id.in_(z2.with_entities(dislikes.user_id)) \
             ).all()
             if len(women):
                 choice = random.choice(women)
@@ -146,7 +155,9 @@ def search():
             men = users.query.filter_by(sex='M').filter( \
                 ~users.id.in_(y1.with_entities(matches.user_two_id)) \
                 , ~users.id.in_(y2.with_entities(matches.user_one_id)) \
-                , ~users.id.in_(x.with_entities(requests.receiver_id))
+                , ~users.id.in_(x.with_entities(requests.receiver_id)) \
+                , ~users.id.in_(z1.with_entities(dislikes.disliked_id)) \
+                , ~users.id.in_(z2.with_entities(dislikes.user_id)) \
             ).all()
             if len(men):
                 choice = random.choice(men)
