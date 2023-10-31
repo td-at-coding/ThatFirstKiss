@@ -214,14 +214,14 @@ def chats():
                     username = current_match.user_one.name \
                         if current_match.user_two.name == session['user'] \
                         else current_match.user_two.name
-                    return redirect(url_for('user.view',match_id=match_id, username=username))
+                    return redirect(url_for('user.view',match_id=match_id))
         return render_template('user/chats.html', active=True, name=session['user'], ms=ms)
     else:
         flash("You've to be logged in order to access!")
         return redirect(url_for('user.home'))
 
-@user.route('/chats/<int:match_id>/<username>', methods=['POST','GET'])
-def view(match_id,username):
+@user.route('/chats/<int:match_id>')
+def view(match_id):
     if 'user' in session:
         current_user = users.query.filter_by(name=session['user']).first()
         current_id = current_user.id
@@ -229,15 +229,9 @@ def view(match_id,username):
             .filter(or_(matches.user_one_id==current_id, matches.user_two_id==current_id)) \
             .filter_by(id=match_id).first()
         if ms:
-            if request.method == "POST":
-                submit_value = request.form['submit']
-                if submit_value == 'send_button':
-                    text = request.form['text']
-                    msg = messages(text,ms,current_user)
-                    db.session.add(msg)
-                    db.session.commit()
             l = messages.query.filter_by(match_id=match_id).all()
-            return render_template('user/view.html', active=True,l=l,username=username)
+            receiver = ms.user_one.name if ms.user_two.name == current_user.name else ms.user_two.name
+            return render_template('user/view.html', active=True,l=l,sender=current_user.name,receiver=receiver,match_id=match_id)
         else:
             flash("You've to be matched in order to access!")
             return redirect(url_for('user.home', active=True))
