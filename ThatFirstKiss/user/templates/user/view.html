@@ -1,7 +1,7 @@
 {%extends "user/base.html"%}
-{%block title%}{{receiver}}{%endblock%}
+{%block title%}{{receiver.name}}{%endblock%}
 {%block content%}
-    <h1>{{receiver}}</h1>
+    <h1>{{receiver.name}}</h1>
     {%with messages = get_flashed_messages()%}
         {%if messages%}
             {%for msg in messages%}
@@ -9,45 +9,49 @@
             {%endfor%}
         {%endif%}
     {%endwith%}
-    <div id="list">
-        {%if l and l|length%}
-            {%for e in l%}
-                <p>{{e.user.name}}: {{e.text}}</p>
-            {%endfor%}
-        {%endif%}
-    </div>
-    <p>
-        <input type="text" name="text" placeholder="text to send" id="message_input">
-        <button type="submit" value="send_button" name="submit" id="send_button">send</button>
-    </p>
-    <script type="module">
-        import { io } from "https://cdn.socket.io/4.3.2/socket.io.esm.min.js";
-        // var socket = io.connect('http://'+document.domain+':'+location.port+"{{url_for('user.view',match_id=match_id)}}");
-        var socket = io();
-        const list = document.getElementById('list');
-        socket.on('message', chat =>
-        {
-            const ptag = document.createElement('p');
-            const text =document.createTextNode(`${chat.sender}: ${chat.message}`);
-            console.log(text)
-            ptag.appendChild(text);
-            list.appendChild(ptag);
-        });
-        const send_button = document.getElementById('send_button');
-        const message_input = document.getElementById('message_input');
-        send_button.addEventListener('click', e=>{
-            const text = message_input.value;
-            socket.emit('message', { sender:"{{sender}}", message:text, match_id:"{{match_id}}"});
-            message_input.value = ''
-        });
+    {%if receiver.banned%}
+        <h2>Sorry, {{receiver.name}} is banned!</h2>
+    {%else%}
+        <div id="list">
+            {%if l and l|length%}
+                {%for e in l%}
+                    <p>{{e.user.name}}: {{e.text}}</p>
+                {%endfor%}
+            {%endif%}
+        </div>
+        <p>
+            <input type="text" name="text" placeholder="text to send" id="message_input">
+            <button type="submit" value="send_button" name="submit" id="send_button">send</button>
+        </p>
+        <script type="module">
+            import { io } from "https://cdn.socket.io/4.3.2/socket.io.esm.min.js";
+            // var socket = io.connect('http://'+document.domain+':'+location.port+"{{url_for('user.view',match_id=match_id)}}");
+            var socket = io();
+            const list = document.getElementById('list');
+            socket.on('message', chat =>
+            {
+                const ptag = document.createElement('p');
+                const text =document.createTextNode(`${chat.sender}: ${chat.message}`);
+                console.log(text)
+                ptag.appendChild(text);
+                list.appendChild(ptag);
+            });
+            const send_button = document.getElementById('send_button');
+            const message_input = document.getElementById('message_input');
+            send_button.addEventListener('click', e=>{
+                const text = message_input.value;
+                socket.emit('message', { sender:"{{sender.name}}", message:text, match_id:"{{match_id}}"});
+                message_input.value = ''
+            });
 
-        window.addEventListener('load', e=>{
-            socket.emit('join_match', { match_id:"{{match_id}}"});
-        });
+            window.addEventListener('load', e=>{
+                socket.emit('join_match', { match_id:"{{match_id}}"});
+            });
 
-        window.addEventListener('beforeunload', e=>{
-            socket.emit('leave_match', { match_id:"{{match_id}}"});
-        });
+            window.addEventListener('beforeunload', e=>{
+                socket.emit('leave_match', { match_id:"{{match_id}}"});
+            });
 
-    </script>
+        </script>
+    {%endif%}
 {%endblock%}

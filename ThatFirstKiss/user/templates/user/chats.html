@@ -17,7 +17,7 @@
                 <div class="row">
                     {%for m in ms%}
                         <div class="col-md-4 mb-4">
-                            {%if m.user_one.name == name%}
+                            {%if m.user_one.name == active.name%}
                                 <p>{{m.user_two.name}}</p>
                             {%else%}
                                 <p>{{m.user_one.name}}</p>

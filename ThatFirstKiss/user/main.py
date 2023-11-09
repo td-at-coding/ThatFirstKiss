@@ -13,8 +13,9 @@ def allowed_file(filename):
 
 @user.route('/')
 def home():
-    active = 'user' in session
-    return render_template('user/index.html',active=active)
+    name = session.get('user')
+    current_user = users.query.filter_by(name=name).first()
+    return render_template('user/index.html',active=current_user)
 
 @user.route('/login', methods=["POST","GET"])
 def login():
@@ -27,6 +28,8 @@ def login():
             session['email'] = found_user.email
             session['sex'] = ['female','male'][found_user.sex=='M'] if found_user.sex else None
             session['images'] = found_user.id
+            if found_user.banned:
+                return redirect(url_for('user.ban'))
         else:
             usr = users(nm, "", '')
             db.session.add(usr)
@@ -36,8 +39,22 @@ def login():
     else:
         if 'user' in session:
             flash('Already Logged In!')
+            found_user = users.query.filter_by(name=session['user']).first()
+            if found_user.banned:
+                return redirect(url_for('user.ban'))
             return redirect(url_for('user.profile'))
-        return render_template('user/login.html')
+        return render_template('user/login.html', active=False)
+
+
+@user.route('/ban')
+def ban():
+    name = session.pop('user',None)
+    session.pop('email',None)
+    session.pop('sex',None)
+    session.pop('images',None)
+    current_user = users.query.filter_by(name=name).first()
+    return render_template('user/prison.html', active=current_user)
+
 
 @user.route('/profile', methods=["POST","GET"])
 def profile():
@@ -62,7 +79,7 @@ def profile():
                     filename = secure_filename(image.filename)
                     if not allowed_file(filename):
                         flash('The File Extension Is Not Allowed!')
-                        return render_template('user/profile.html', active=True)
+                        return render_template('user/profile.html', active=found_user)
                     mimetype = image.mimetype
                     file = image.read()
                     file = base64.b64encode(file).decode('utf-8')
@@ -73,7 +90,7 @@ def profile():
                     for img in all_images:
                         if img.img == file:
                             flash('The Image Already Exists!')
-                            return render_template('user/profile.html', active=True)
+                            return render_template('user/profile.html', active=found_user)
                     img = images(file,filename,mimetype,found_user.id)
                     db.session.add(img)
                     db.session.commit()
@@ -98,7 +115,8 @@ def profile():
             if 'images' in session:
                 pics = session['images']
         pics = images.query.filter_by(user_id=pics).all()
-        return render_template('user/profile.html', active=True, email=email, sex=sex, pics=pics)
+        current_user = users.query.filter_by(name=nm).first()
+        return render_template('user/profile.html', active=current_user, email=email, sex=sex, pics=pics)
     else:
         flash("You are not logged in!", 'error')
         return redirect(url_for('user.login'))
@@ -138,31 +156,33 @@ def search():
         z1 = dislikes.query.filter_by(user_id=current_user.id)
         z2 = dislikes.query.filter_by(disliked_id=current_user.id)
         if sex == 'male':
-            women = users.query.filter_by(sex='F').filter( \
-                ~users.id.in_(y1.with_entities(matches.user_two_id)) \
-                , ~users.id.in_(y2.with_entities(matches.user_one_id)) \
-                , ~users.id.in_(x.with_entities(requests.receiver_id)) \
-                , ~users.id.in_(z1.with_entities(dislikes.disliked_id)) \
-                , ~users.id.in_(z2.with_entities(dislikes.user_id)) \
+            women = users.query.filter_by(sex='F').filter(
+                ~users.id.in_(y1.with_entities(matches.user_two_id))
+                , ~users.id.in_(y2.with_entities(matches.user_one_id))
+                , ~users.id.in_(x.with_entities(requests.receiver_id))
+                , ~users.id.in_(z1.with_entities(dislikes.disliked_id))
+                , ~users.id.in_(z2.with_entities(dislikes.user_id))
+                , users.banned == False
             ).all()
             if len(women):
                 choice = random.choice(women)
                 pics = images.query.filter_by(user_id=choice.id).all()
-                return render_template('user/search.html', active=True, name=choice.name, id=choice.id, pics=pics)
+                return render_template('user/search.html', active=current_user, name=choice.name, id=choice.id, pics=pics)
             else:
                 return "Can't find any body!"
         elif sex == 'female':
-            men = users.query.filter_by(sex='M').filter( \
-                ~users.id.in_(y1.with_entities(matches.user_two_id)) \
-                , ~users.id.in_(y2.with_entities(matches.user_one_id)) \
-                , ~users.id.in_(x.with_entities(requests.receiver_id)) \
-                , ~users.id.in_(z1.with_entities(dislikes.disliked_id)) \
-                , ~users.id.in_(z2.with_entities(dislikes.user_id)) \
+            men = users.query.filter_by(sex='M').filter(
+                ~users.id.in_(y1.with_entities(matches.user_two_id))
+                , ~users.id.in_(y2.with_entities(matches.user_one_id))
+                , ~users.id.in_(x.with_entities(requests.receiver_id))
+                , ~users.id.in_(z1.with_entities(dislikes.disliked_id))
+                , ~users.id.in_(z2.with_entities(dislikes.user_id))
+                , users.banned == False
             ).all()
             if len(men):
                 choice = random.choice(men)
                 pics = images.query.filter_by(user_id=choice.id).all()
-                return render_template('user/search.html', active=True, name=choice.name, id=choice.id, pics=pics)
+                return render_template('user/search.html', active=current_user, name=choice.name, id=choice.id, pics=pics)
             else:
                 return "Can't find any body!"
         else:
@@ -193,7 +213,7 @@ def settings():
         current_id = current_user.id
         reqs = requests.query.filter_by(initiator_id=current_id).all()
         ms = matches.query.filter(or_(matches.user_one_id==current_id, matches.user_two_id==current_id))
-        return render_template('user/settings.html', active=True, reqs=reqs, ms=ms, name=current_user.name )
+        return render_template('user/settings.html', active=current_user, reqs=reqs, ms=ms, name=current_user.name )
     else:
         flash("You've to be logged in order to access!")
         return redirect(url_for('user.home'))
@@ -210,12 +230,8 @@ def chats():
                 submit_value = request_form.split('.')
                 if submit_value[0] == 'match_chat':
                     match_id = int(submit_value[1])
-                    current_match = ms.filter_by(id=match_id).first()
-                    username = current_match.user_one.name \
-                        if current_match.user_two.name == session['user'] \
-                        else current_match.user_two.name
                     return redirect(url_for('user.view',match_id=match_id))
-        return render_template('user/chats.html', active=True, name=session['user'], ms=ms)
+        return render_template('user/chats.html', active=current_user, ms=ms)
     else:
         flash("You've to be logged in order to access!")
         return redirect(url_for('user.home'))
@@ -230,11 +246,11 @@ def view(match_id):
             .filter_by(id=match_id).first()
         if ms:
             l = messages.query.filter_by(match_id=match_id).all()
-            receiver = ms.user_one.name if ms.user_two.name == current_user.name else ms.user_two.name
-            return render_template('user/view.html', active=True,l=l,sender=current_user.name,receiver=receiver,match_id=match_id)
+            receiver = ms.user_one if ms.user_two.name == current_user.name else ms.user_two
+            return render_template('user/view.html', active=current_user,l=l,sender=current_user,receiver=receiver,match_id=match_id)
         else:
             flash("You've to be matched in order to access!")
-            return redirect(url_for('user.home', active=True))
+            return redirect(url_for('user.chats'))
 
     else:
         flash("You've to be logged in order to access!")

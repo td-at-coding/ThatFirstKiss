@@ -1,18 +1,27 @@
 {%extends "admin/base.html"%}
 {%block title%}View{%endblock%}
 {%block content%}
-    {%for item in values%}
-        <p>{{item.id}} Name: {{item.name}}, Email: {{item.email}}, Sex: {{item.sex}}</p>
-        <div class="container">
-            <div class="row">
-                {%for img in images%}
-                    {%if img.user_id == item.id%}
-                        <div class="col-md-4 mb-4">
-                            <img src="{{img.img}}" alt="{{img.filename}}" class="img-fluid" width="64" height="64">
-                        </div>
-                    {%endif%}
-                {%endfor%}
+    <form action="#" method="post">
+        {%for item in values%}
+            <p>{{item.id}} Name: {{item.name}}, Email: {{item.email if item.email else "No Email"}}, Sex: {{item.sex}}</p>
+            <p>
+                {%if item.banned%}
+                    <button type="submit" value="unban_request.{{item.id}}" name="submit">UNBAN</button>
+                {%else%}
+                    <button type="submit" value="ban_request.{{item.id}}" name="submit">BAN</button>
+                {%endif%}
+            </p>
+            <div class="container">
+                <div class="row">
+                    {%for img in images%}
+                        {%if img.user_id == item.id%}
+                            <div class="col-md-4 mb-4">
+                                <img src="{{img.img}}" alt="{{img.filename}}" class="img-fluid" width="64" height="64">
+                            </div>
+                        {%endif%}
+                    {%endfor%}
+                </div>
             </div>
-        </div>
-    {%endfor%}
+        {%endfor%}
+    </form>
 {%endblock%}

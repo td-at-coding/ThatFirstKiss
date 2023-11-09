@@ -7,6 +7,7 @@ class users(db.Model):
     name = db.Column('name', db.String(100))
     email = db.Column('email', db.String(100))
     sex = db.Column('sex', db.String(1))
+    banned = db.Column('banned', db.Boolean, default=False)
     def __init__(self,name,email,sex):
         self.name = name
         self.email = email
@@ -85,3 +86,23 @@ class dislikes(db.Model):
     def __init__(self,user,disliked):
         self.user = user
         self.disliked = disliked
+
+# class reports(db.Model):
+#     id = db.Column('id', db.Integer, primary_key=True)
+#     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+#     reporter_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+#     title = db.Column('title', db.String(100))
+#     desc = db.Column('desc', db.String(500))
+
+#     user = db.relationship('users', foreign_keys=[user_id])
+#     reporter = db.relationship('users', foreign_keys=[reporter_id])
+
+#     __table_args__ = (
+#         db.UniqueConstraint('user_id', 'reporter_id', name='unique_reports'),
+#     )
+
+#     def __init__(self,title,desc,user,repoter):
+#         self.title = title
+#         self.desc = desc
+#         self.user = user
+#         self.repoter = repoter
